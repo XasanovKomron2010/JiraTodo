@@ -1,0 +1,8 @@
+.container{
+    width: 90% ;
+    max-width: 2000px;
+    margin-top: 24px;
+}
+input[type='checkbox']{
+    zoom: 1.5;
+}

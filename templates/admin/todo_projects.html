@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, msg in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show d-flex justify-content-between align-items-center mr-4 mt-3" role="alert">
+                {{ msg }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<section class="container">
+    <div class="w-100 d-flex align-items-center justify-content-between flex-wrap manage-b">
+        <h5 class="mb-0 management">Todos of your Projects</h5>
+        <form method="post" class="d-flex">
+            <div class="users-input">
+                <input type="text" placeholder="Search project title" name="search_text">
+                <button name="search" value="clicked"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="table-cover">
+    <table class="table table-hover" style="min-width: 1000px;">
+        <thead>
+            <tr>
+                <th>Project Title</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Deadline</th>
+                <th>Is Frozen</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody> 
+            {% for project in projects %}
+                {% for todos in project['project_todos'] %}
+                    <tr>
+                        <td>{{ project['project_title'] }}</td>
+                        <td>{{ todos.title }}</td>
+                        <td>{{ todos.description }}</td>
+                        <td>{{ todos.priority }}</td>
+                        <td>{{ todos.deadline.strftime("%B %d, %Y, %I:%M %p") }}</td>
+                        <td>{{ todos.is_frozen }}</td>
+                        <td>
+                            <form method="post">
+                                <select style="max-width: 100px;" name="todo-status" class="custom-select custom-select-sm" onchange="this.form.submit()">
+                                    <option value="pending,{{ todos.id }}" {% if todos.user_status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="doing,{{ todos.id }}" {% if todos.user_status == 'doing' %}selected{% endif %}>Doing</option>
+                                    <option value="completed,{{ todos.id }}" {% if todos.user_status == 'completed' %}selected{% endif %}>Completed</option>
+                                    <option value="failed,{{ todos.id }}" {% if todos.user_status == 'failed' %}selected{% endif %}>Failed</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

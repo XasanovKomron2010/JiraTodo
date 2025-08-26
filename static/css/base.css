@@ -1,0 +1,73 @@
+.nav{
+    border-bottom: 1px solid #DDDEDD;
+}
+.nav-in{
+    width: 90%;
+    margin: 0 auto;
+}
+.nav img{
+    width: 25px;
+    height: 25px;
+}
+button:focus,
+button:active,
+.btn:focus,
+.btn:active {
+  box-shadow: none !important;
+  outline: none !important;
+}
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px; /* hidden by default */
+    width: 300px;
+    height: 100%;
+    background-color: #333;
+    color: white;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+    transition: left 0.3s ease;
+    z-index: 1000;
+}
+.sidebar.open {
+    left: 0;
+}
+.sidebar .position-absolute{
+    position: absolute;
+    top: 20px;
+    right: 10px;
+}
+.sidebar ul{
+    padding-left: 0;
+    list-style-type: none;
+    line-height: 50px;
+}
+.sidebar *{
+    color: white;
+}
+.sidebar a:hover{
+    color: white;
+    text-decoration: none;
+}
+.sidebar li{
+    padding-left: 20px;
+}
+
+.arrow {
+    transition: transform 0.3s ease;
+}
+.toggler:hover{
+    cursor: pointer;
+}
+.arrow.rotate {
+    transform: rotate(90deg);
+}
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    margin-left: 20px;
+}
+.submenu.show {
+      max-height: 500px;
+}
