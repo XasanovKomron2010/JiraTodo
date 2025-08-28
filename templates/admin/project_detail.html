@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .nav{
+        padding: 10px !important;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: #f9f9fb;
+        color: #333;
+    }
+
+    .project-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        padding-top: 15px;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+        margin-bottom: 10px;
+    }
+
+    .card h1, .card h2 {
+        margin-top: 0;
+        color: #222;
+    }
+
+    .meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 20px 0;
+        font-size: 14px;
+    }
+
+    .meta-item {
+        background: #f9f9fb;
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .meta-item span {
+        display: block;
+        font-weight: 600;
+        color: #6a4dc6;
+        margin-bottom: 5px;
+    }
+
+    .todo-list {
+        margin-top: 15px;
+        max-height: 250px;      /* adjust as needed */
+        overflow-y: auto;
+        padding-right: 5px;     /* space for scrollbar */
+    }
+
+    .todo-card {
+        background: #f9f9fb;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+        transition: background 0.2s;
+    }
+
+    .todo-card:hover {
+        background: #f1f1f5;
+    }
+
+    .todo-title {
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .todo-desc {
+        font-size: 13px;
+        margin-bottom: 8px;
+        color: #555;
+    }
+
+    .todo-meta {
+        font-size: 12px;
+        color: #666;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .status-pending,.status-doing,.medium-priority {
+        color: #c77d00;
+        font-weight: 600;
+    }
+
+    .status-completed {
+        color: #0c7a43;
+        font-weight: 600;
+    }
+
+    .status-failed, .high-priority{
+        color: red;
+        font-weight: 600;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 5px;
+        text-decoration: none;
+        color: #6a4dc6;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: #5538a5;
+    }
+</style>
+
+<section class="project-page">
+    <!-- Project Info -->
+    <div class="card">
+        <h1>{{ project.title }}</h1>
+        <p>{{ project.description }}</p>
+
+        <div class="meta-grid">
+            <div class="meta-item">
+                <span>Team Lead ID</span>
+                {{ project.team_lead_id }}
+            </div>
+            <div class="meta-item">
+                <span>Column ID</span>
+                {{ project.column_id }}
+            </div>
+            <div class="meta-item">
+                <span>Deadline</span>
+                {{ project.deadline.strftime("%d %B %Y, %H:%M") }}
+            </div>
+            <div class="meta-item">
+                <span>Created At</span>
+                {{ project.created_at.strftime("%d %B %Y, %H:%M") }}
+            </div>
+            <div class="meta-item">
+                <span>Frozen?</span>
+                {% if project.is_frozen %}Yes{% else %}No{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Todos -->
+    <div class="card">
+        <h2>Project Todos</h2>
+        <div class="todo-list">
+            {% for todo in todos %}
+                <div class="todo-card">
+                    <div class="todo-title">{{ todo.title }}</div>
+                    <div class="todo-desc">{{ todo.description }}</div>
+                    <div class="todo-meta">
+                        <span class="{{ todo.priority.lower() }}">Priority: {{todo.priority}}</span>
+                        <span>Deadline: {{ todo.deadline.strftime("%d %B %Y, %H:%M") }}</span>
+                        <span>Status: <span class="status-{{ todo.status.lower() }}">{{todo.status}}</span></span>
+                        <span>Created: {{ todo.created_at.strftime("%d %B %Y, %H:%M") }}</span>
+                        <span>Frozen? {% if project.is_frozen %}Yes{% else %}No{% endif %}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <a class="back-link" href="{{ url_for('admin_page') }}">← Back to Projects</a>
+</section>
+{% endblock %}

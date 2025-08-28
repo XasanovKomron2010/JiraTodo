@@ -95,6 +95,7 @@
                 <th>Description</th>
                 <th>Priority</th>
                 <th>Deadline</th>
+                <th>Status</th>
                 <th>Is Frozen</th>
                 <th>Action</th>
             </tr>
@@ -109,6 +110,7 @@
                     <td>{{ todos[i].description }}</td>
                     <td>{{ todos[i].priority }}</td>
                     <td>{{ todos[i].deadline.strftime("%B %d, %Y, %I:%M %p") }}</td>
+                    <td>{{ todos[i].status }}</td>
                     <td>{{ todos[i].is_frozen }}</td>
                     <td class="d-flex justify-content-start">
                         <button data-toggle="modal" data-target="#update{{ todos[i].id }}" class="btn"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -184,6 +186,12 @@
                                         <label class="col-sm-4 col-form-label">{{ form.deadline.label() }}</label>
                                         <div class="col-sm-8">
                                             {{ form.deadline(class="form-control", value = todos[i].deadline.strftime("%Y-%m-%dT%H:%M"), required = True) }}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-4 col-form-label">{{ form.status.label() }}</label>
+                                        <div class="col-sm-8">
+                                            {{ form.status(class="form-control") }}
                                         </div>
                                     </div>
                                 </div>

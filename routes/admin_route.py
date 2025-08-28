@@ -18,8 +18,53 @@ from forms.admin_forms import UserCreateForm, ProjectCreateForm, TodoCreateForm,
 @login_required
 def admin_page():
     info = get_permissions_and_role(current_user.id)
-    if info[1] in ['admin','team-lead']:
-        return render_template('admin/home.html')
+    columns = (
+    ProjectColumn.query
+        .filter_by(is_deleted=False)
+        .order_by(ProjectColumn.order)
+        .all()
+    )
+    project_columns = []
+    for c in columns:
+        project_columns.append({'column':c, 'projects':Project.query.filter_by(column_id = c.id, is_deleted = False).all()})
+    return render_template('admin/home.html', project_columns=project_columns)
+    
+@root.route("/change_column/<int:project_id>", methods=["POST"])
+@login_required
+def change_column(project_id: int):
+    info = get_permissions_and_role(current_user.id)
+    if 'edit_project_column' not in info[0]:
+        abort(403)
+    project = Project.query.filter_by(id = project_id).first()
+    max_column = ProjectColumn.query.filter_by(is_deleted = False).order_by(ProjectColumn.order.desc()).first()
+    current_order = ProjectColumn.query.filter_by(id = project.column_id).first().order
+    if request.form.get('left'):
+        if current_order > 1:
+            new_column = ProjectColumn.query.filter_by(order = current_order - 1, is_deleted = False).first()
+            if new_column:
+                project.column_id = new_column.id
+                db.session.commit()
+        else:
+            project.column_id = max_column.id
+            db.session.commit()
+    elif request.form.get('right'):
+        if current_order < max_column.order:
+            new_column = ProjectColumn.query.filter_by(order = current_order + 1, is_deleted = False).first()
+            if new_column:
+                project.column_id = new_column.id
+                db.session.commit()
+        else:
+            project.column_id = max_column.id
+            db.session.commit()
+    return redirect(url_for('admin_page'))
+
+@root.route('/project-detail/<int:project_id>')
+def admin_project_detailed_page(project_id: int):
+    info = get_permissions_and_role(current_user.id)
+    if request.method == 'GET' and 'view_projects' in info[0]:
+        project = Project.query.filter_by(id = project_id).first()
+        project_todos = Todo.query.filter_by(project_id = project_id, is_deleted = False).all()
+        return render_template('admin/project_detail.html', project = project, todos = project_todos)
     else:
         abort(403)
 
@@ -321,6 +366,7 @@ def admin_todos_page():
         todo.priority = form.priority.data
         todo.description = form.description.data
         todo.deadline = form.deadline.data
+        todo.status = form.status.data
         db.session.commit()
         flash("Todo successfully updated", "success")
         return redirect(url_for('admin_todos_page'))
@@ -359,32 +405,31 @@ def admin_todos_page():
 @root.route('/admin-project-columns', methods = ['GET', 'POST'])
 @login_required
 def admin_project_columns_page():
-    project_columns = ProjectColumn.query.filter_by(is_deleted = False).all()
-    form = ProjectColumnCreateForm(Project.query.filter_by(is_deleted = False).all())
-    if request.method == 'GET':
+    info = get_permissions_and_role(current_user.id)
+    project_columns = (
+    ProjectColumn.query
+        .filter_by(is_deleted=False)
+        .order_by(ProjectColumn.order)
+        .all()
+    )
+    form = ProjectColumnCreateForm()
+    if request.method == 'GET' and 'view_project_column' in info[0]:
         return render_template('admin/project_column.html', columns = project_columns, form = form)
-    elif request.form.get('update_project_column') and 'view_project_column':
+    elif request.form.get('update_project_column') and 'edit_project_column' in info[0]:
         pc_id = request.form.get('update_project_column')
         pc = ProjectColumn.query.filter_by(id = pc_id).first()
-        project_id = form.project_id.data
-        if project_id == 'None':
-            project_id = None
-        pc.project_id = project_id
-        pc.column = form.column.data
-        pc.order = form.order.data
+        pc.column = request.form.get('update_column')
+        pc.order = request.form.get('update_order')
         db.session.commit()
         flash("Project column successfully updated", 'success')
         return redirect(url_for('admin_project_columns_page'))
-    elif form.validate_on_submit() and 'create_project_column':
-        project_id = form.project_id.data
-        if project_id == 'None':
-            project_id = None
-        pc = ProjectColumn(project_id, form.column.data, form.order.data)
+    elif form.validate_on_submit() and 'create_project_column' in info[0]:
+        pc = ProjectColumn(form.column.data, form.order.data)
         db.session.add(pc)
         db.session.commit()
         flash("Project column successfully created", "success")
         return redirect(url_for('admin_project_columns_page'))
-    elif request.form.get('delete_project_column') and 'delete_project_column':
+    elif request.form.get('delete_project_column') and 'delete_project_column' in info[0]:
         project_column_id = request.form.get('delete_project_column')
         pc = ProjectColumn.query.filter_by(id = project_column_id).first()
         pc.is_deleted = True
@@ -392,4 +437,5 @@ def admin_project_columns_page():
         flash("Project-Column successfuly deleted", 'success')
         return redirect(url_for('admin_project_columns_page'))
     else:
+        print(form.errors)
         abort(403)

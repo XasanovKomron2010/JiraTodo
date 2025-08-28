@@ -21,7 +21,7 @@ class ProjectCreateForm(FlaskForm):
     title = StringField("Title", [validators.DataRequired()])
     description = StringField("Description", [validators.DataRequired()])
     deadline = DateTimeLocalField("Deadline", format='%Y-%m-%dT%H:%M', validators=[validators.DataRequired()])
-    status = SelectField("Status", choices = [])
+    status = SelectField("Column", choices = [])
     submit = SubmitField("Submit", [validators.DataRequired()])
 
     def __init__(self, team_leads, column_choices, *args, **kwargs):
@@ -35,6 +35,7 @@ class TodoCreateForm(FlaskForm):
     title = StringField("Title", [validators.DataRequired()])
     description = StringField("Description", [validators.DataRequired()])
     priority = SelectField('Priority', choices=[('low','Low'),('medium','Medium'),('high','High')], default='low')
+    status = SelectField('Status', choices = [('pending','Pending'),('doing','Doing'),('completed','Completed'),('failed','Failed')])
     deadline = DateTimeLocalField("Deadline", format='%Y-%m-%dT%H:%M', validators=[validators.DataRequired()])
     submit = SubmitField("Create Todo")
 
@@ -44,11 +45,6 @@ class TodoCreateForm(FlaskForm):
         self.project_id.choices = [(None, 'Nothing')] + [(p.id, p.title) for p in projects]
 
 class ProjectColumnCreateForm(FlaskForm):
-    project_id = SelectField("Project", choices = [])
     column = StringField("Column", [validators.DataRequired()])
     order = IntegerField("Order", [validators.DataRequired()])
     submit = SubmitField("Submit")
-
-    def __init__(self, projects, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.project_id.choices = [(None, 'Nothing')] + [(p.id, p.title) for p in projects]

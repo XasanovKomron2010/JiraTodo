@@ -26,12 +26,6 @@
                 {{ form.hidden_tag() }}
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <label class="col-sm-4 col-form-label">{{ form.project_id.label() }}</label>
-                        <div class="col-sm-8">
-                            {{ form.project_id(class="form-control") }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
                         <label class="col-sm-4 col-form-label">{{ form.column.label() }}</label>
                         <div class="col-sm-8">
                             {{ form.column(class="form-control") }}
@@ -121,21 +115,15 @@
                                 {{ form.hidden_tag()}}
                                 <div class="modal-body">
                                     <div class="row mb-3">
-                                        <label class="col-sm-4 col-form-label">{{ form.project_id.label() }}</label>
+                                        <label class="col-sm-4 col-form-label">Column</label>
                                         <div class="col-sm-8">
-                                            {{ form.project_id(class="form-control") }}
+                                            <input type="text" class="form-control" name="update_column" value="{{ columns[i].column }}">
                                         </div>
                                     </div>
                                     <div class="row mb-3">
-                                        <label class="col-sm-4 col-form-label">{{ form.column.label() }}</label>
+                                        <label class="col-sm-4 col-form-label">Order</label>
                                         <div class="col-sm-8">
-                                            {{ form.column(class="form-control", value=columns[i].column) }}
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <label class="col-sm-4 col-form-label">{{ form.order.label() }}</label>
-                                        <div class="col-sm-8">
-                                            {{ form.order(class="form-control", value=columns[i].order) }}
+                                            <input type="number" class="form-control" name="update_order" value="{{ columns[i].order }}">
                                         </div>
                                     </div>
                                 </div>
