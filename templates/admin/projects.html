@@ -81,7 +81,6 @@
                 <th>Description</th>
                 <th>Team-Lead</th>
                 <th>Deadline</th>
-                <th>Column</th>
                 <th>Is Frozen</th>
                 <th>Action</th>
             </tr>
@@ -93,11 +92,6 @@
                     <td>{{ projects[i].description }}</td>
                     <td>{{ team_leads[i] }}</td>
                     <td>{{ projects[i].deadline.strftime("%B %d, %Y, %I:%M %p") }}</td>
-                    <td>
-                        {% for cc in column_choices %}
-                            {% if cc.id == projects[i].column_id %} {{cc.column}} {% endif %}
-                        {% endfor %}
-                    </td>
                     <td>{{ projects[i].is_frozen }}</td>
                     <td class="d-flex justify-content-start">
                         <button data-toggle="modal" data-target="#update{{ projects[i].id }}" class="btn"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -143,12 +137,6 @@
                                         <label class="col-sm-4 col-form-label">{{ form.team_lead.label() }}</label>
                                         <div class="col-sm-8">
                                             {{ form.team_lead(class="form-control") }}
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <label class="col-sm-4 col-form-label">{{ form.status.label() }}</label>
-                                        <div class="col-sm-8">
-                                            {{ form.status(class="form-control") }}
                                         </div>
                                     </div>
                                     <div class="row mb-3">

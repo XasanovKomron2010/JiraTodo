@@ -1,9 +1,10 @@
 from app import root
 from models import db
-from sqlalchemy import or_
+from sqlalchemy import column, or_
 from models.todo import Todo
 from models.user import User
 from models.role import Role
+from datetime import datetime
 from models.project import Project
 from models.permission import Permission
 from models.project_column import ProjectColumn
@@ -12,59 +13,118 @@ from models.role_permission import RolePermission
 from flask_login import login_required, current_user
 from routes.main_route import get_permissions_and_role
 from flask import render_template, request, flash, redirect, url_for, abort
-from forms.admin_forms import UserCreateForm, ProjectCreateForm, TodoCreateForm, ProjectColumnCreateForm
+from forms.admin_forms import UserCreateForm, ProjectCreateForm, TodoCreateForm, ProjectColumnCreateForm, ProjectTodoCreateForm
 
 @root.route('/admin')
 @login_required
 def admin_page():
     info = get_permissions_and_role(current_user.id)
-    columns = (
-    ProjectColumn.query
-        .filter_by(is_deleted=False)
-        .order_by(ProjectColumn.order)
-        .all()
-    )
-    project_columns = []
-    for c in columns:
-        project_columns.append({'column':c, 'projects':Project.query.filter_by(column_id = c.id, is_deleted = False).all()})
-    return render_template('admin/home.html', project_columns=project_columns)
-    
-@root.route("/change_column/<int:project_id>", methods=["POST"])
+    team_lead_id = User.query.filter_by(id = current_user.id).first().team_lead_id
+    if info[1] == 'admin':
+        projects = Project.query.filter_by(is_deleted = False).all()
+    else:
+        projects = Project.query.filter(
+            Project.is_deleted == False,
+            or_(
+                Project.team_lead_id == team_lead_id,
+                Project.team_lead_id == current_user.id
+            )
+        ).all()
+    return render_template('admin/home.html', projects = projects)
+@root.route("/change_column/<int:todo_id>/<int:column_id>", methods=["POST"])
 @login_required
-def change_column(project_id: int):
+def change_column(todo_id: int, column_id: int):    
     info = get_permissions_and_role(current_user.id)
     if 'edit_project_column' not in info[0]:
         abort(403)
-    project = Project.query.filter_by(id = project_id).first()
-    max_column = ProjectColumn.query.filter_by(is_deleted = False).order_by(ProjectColumn.order.desc()).first()
-    current_order = ProjectColumn.query.filter_by(id = project.column_id).first().order
-    if request.form.get('left'):
-        if current_order > 1:
-            new_column = ProjectColumn.query.filter_by(order = current_order - 1, is_deleted = False).first()
-            if new_column:
-                project.column_id = new_column.id
+    todo = Todo.query.filter_by(id = todo_id).first()
+    columns = ProjectColumn.query.filter_by(is_deleted = False).order_by(ProjectColumn.order).all()
+    for i in range(len(columns)):
+        if columns[i].id == column_id:
+            print('here')
+            if request.form.get('arrow') == 'right':
+                if i+1 < len(columns):
+                    todo.column_id = columns[i+1].id
+                    db.session.commit()
+                else:
+                    todo.column_id = columns[0].id
+                    db.session.commit()
+            elif request.form.get('arrow') == 'left':
+                todo.column_id = columns[i-1].id
                 db.session.commit()
-        else:
-            project.column_id = max_column.id
-            db.session.commit()
-    elif request.form.get('right'):
-        if current_order < max_column.order:
-            new_column = ProjectColumn.query.filter_by(order = current_order + 1, is_deleted = False).first()
-            if new_column:
-                project.column_id = new_column.id
-                db.session.commit()
-        else:
-            project.column_id = max_column.id
-            db.session.commit()
-    return redirect(url_for('admin_page'))
+    return redirect(url_for('admin_project_detailed_page', project_id = columns[i].project_id))
 
-@root.route('/project-detail/<int:project_id>')
+@root.route('/change_column2/<int:column_id>', methods = ['POST'])
+@login_required
+def change_column2(column_id: int):
+    info = get_permissions_and_role(current_user.id)
+    if 'edit_project_column' not in info[0]:
+        print('here')
+        abort(403)
+    columns = ProjectColumn.query.filter_by(is_deleted = False).order_by(ProjectColumn.order).all()
+    for i in range(len(columns)):
+        if columns[i].id == column_id:
+            if request.form.get('move') == 'right':
+                columns[i].order+=1
+                columns[i+1].order-=1
+            elif request.form.get('move') == 'left':
+                columns[i].order-=1
+                columns[i-1].order+=1
+            db.session.commit()
+            return redirect(url_for('admin_project_detailed_page', project_id=columns[i].project_id))
+    return abort(404)
+
+@root.route('/project-detail/<int:project_id>', methods = ['GET', 'POST'])
 def admin_project_detailed_page(project_id: int):
     info = get_permissions_and_role(current_user.id)
     if request.method == 'GET' and 'view_projects' in info[0]:
         project = Project.query.filter_by(id = project_id).first()
-        project_todos = Todo.query.filter_by(project_id = project_id, is_deleted = False).all()
-        return render_template('admin/project_detail.html', project = project, todos = project_todos)
+        team_lead = User.query.filter_by(id = project.team_lead_id).first().full_name if project.team_lead_id is not None else "Nobody"
+        project_columns = ProjectColumn.query.filter_by(is_deleted = False, project_id = project_id).order_by(ProjectColumn.order).all()
+        together = []
+        for pc in project_columns:
+            todos = Todo.query.filter_by(is_deleted = False, column_id = pc.id).all()
+            together.append({'column':pc, 'todos':todos})
+        return render_template('admin/project_detail.html', project = project, together = together, team_lead = team_lead)
+    elif request.form.get('submit') == 'todo' and 'create_todos' in info[0]:
+        try:
+            a = datetime.strptime(request.form.get('deadline'), '%Y-%m-%dT%H:%M')
+        except ValueError:
+            flash('Invalid Deadline', 'warning')
+            return redirect(url_for('admin_project_detailed_page', project_id = project_id))
+        
+        now = datetime.now()
+        if a <= now:
+            flash("Deadline must be in the future", "warning")
+            return redirect(url_for('admin_project_detailed_page', project_id = project_id))
+        todo = Todo(None, request.form.get('title'), request.form.get('description'), a, request.form.get('priority'), int(request.form.get('column_id')))
+        db.session.add(todo)
+        db.session.commit()
+        return redirect(url_for('admin_project_detailed_page', project_id = project_id))
+    elif request.form.get('submit') == 'column' and 'create_project_column' in info[0]:
+        order = ProjectColumn.query.filter_by(is_deleted = False, project_id = project_id).order_by(ProjectColumn.order.desc()).first().order+1
+        column = ProjectColumn(project_id, request.form.get('column'), order)
+        db.session.add(column)
+        db.session.commit()
+        return redirect(url_for('admin_project_detailed_page', project_id = project_id))
+    elif request.form.get('delete_todo') and 'delete_todos' in info[0]:
+        id = int(request.form.get('delete_todo'))
+        todo = Todo.query.filter_by(id = id).first()
+        if todo:
+            todo.is_deleted = True
+            db.session.commit()
+            return redirect(url_for('admin_project_detailed_page', project_id = project_id))
+        else:
+            abort(404)
+    elif request.form.get('delete-column') and 'delete_project_column' in info[0]:
+        id = int(request.form.get('delete-column'))
+        column = ProjectColumn.query.filter_by(id = id).first()
+        if column:
+            column.is_deleted = True
+            db.session.commit()
+            return redirect(url_for('admin_project_detailed_page', project_id = column.project_id))
+        else:
+            abort(404)
     else:
         abort(403)
 
@@ -280,7 +340,6 @@ def admin_role_permissions_page():
 def admin_projects_page():
     info = get_permissions_and_role(current_user.id)
     projects = Project.query.filter_by(is_deleted = False).all()
-    column_choices = ProjectColumn.query.filter_by(is_deleted = False).all()
     team_leads = []
     for p in projects:
         if p.team_lead_id is not None:
@@ -292,9 +351,9 @@ def admin_projects_page():
         else:
             team_leads.append("Nobody")
     role_id = Role.query.filter_by(is_deleted = False, role = 'team-lead').first().id
-    form = ProjectCreateForm(User.query.filter_by(role_id = role_id).all(), column_choices)
+    form = ProjectCreateForm(User.query.filter_by(role_id = role_id).all())
     if request.method == 'GET' and 'view_projects' in info[0]:
-        return render_template('admin/projects.html', projects=projects, team_leads = team_leads, form = form, column_choices = column_choices)
+        return render_template('admin/projects.html', projects=projects, team_leads = team_leads, form = form)
     elif request.form.get('delete_project') and 'delete_projects' in info[0]:
         project_id = request.form.get('delete_project')
         project = Project.query.filter_by(id = project_id).first()
@@ -306,13 +365,13 @@ def admin_projects_page():
         project_id = request.form.get('update_project')
         project = Project.query.filter_by(id = project_id).first()
         team_lead_id = form.team_lead.data
+        print(team_lead_id)
         if team_lead_id == "None":
             team_lead_id = None
         project.team_lead_id = team_lead_id
         project.title = form.title.data
         project.description = form.description.data
         project.deadline = form.deadline.data
-        project.column_id = form.status.data
         db.session.commit()
         flash("Project successfully updated", "success")
         return redirect(url_for('admin_projects_page'))
@@ -320,6 +379,11 @@ def admin_projects_page():
         team_lead_id = form.team_lead.data
         if team_lead_id == "None":
             team_lead_id = None
+        
+        now = datetime.now()
+        if form.deadline.data <= now:
+            flash("Deadline must be in the future", "warning")
+            return redirect(url_for('admin_projects_page'))
         project = Project(team_lead_id, form.title.data, form.description.data, form.deadline.data)
         db.session.add(project)
         db.session.commit()
@@ -333,7 +397,7 @@ def admin_projects_page():
                 Project.description.ilike(f"%{text}%")
             )
         ).all()
-        return render_template('admin/projects.html', projects = result, team_leads = team_leads, form = form, column_choices = column_choices)
+        return render_template('admin/projects.html', projects = result, team_leads = team_leads, form = form)
     else:
         abort(403)
         
@@ -344,40 +408,32 @@ def admin_todos_page():
     info = get_permissions_and_role(current_user.id)
     todos = Todo.query.filter_by(is_deleted = False).all()
     u_owners = [User.query.filter_by(id = todo.user_id).first() for todo in todos]
-    p_owners = [Project.query.filter_by(id = todo.project_id).first() for todo in todos]
     form = TodoCreateForm(
-        users = User.query.filter_by(is_deleted = False).all(),
-        projects = Project.query.filter_by(is_deleted = False).all()
+        users = User.query.filter_by(is_deleted = False).all()
     )
     if request.method == 'GET' and 'view_todos' in info[0]:
-        return render_template('admin/todos.html', todos = todos, u_owners = u_owners, p_owners = p_owners, form = form)
+        return render_template('admin/todos.html', todos = todos, u_owners = u_owners, form = form)
     elif request.form.get('update_todo') and 'edit_todos' in info[0]:
         todo_id = request.form.get('update_todo')
         todo = Todo.query.filter_by(id = todo_id).first()
         user_id = form.user_id.data
-        project_id = form.project_id.data
         if user_id == "None":
             user_id = None
-        if project_id == 'None':
-            project_id = None
         todo.user_id = user_id
-        todo.project_id = project_id
+        todo.user_status = form.user_status.data
         todo.title = form.title.data
         todo.priority = form.priority.data
         todo.description = form.description.data
         todo.deadline = form.deadline.data
-        todo.status = form.status.data
+        todo.user_status = form.user_status.data
         db.session.commit()
         flash("Todo successfully updated", "success")
         return redirect(url_for('admin_todos_page'))
     elif form.validate_on_submit() and 'create_todos' in info[0]:
         user_id = form.user_id.data
-        project_id = form.project_id.data
         if user_id == "None":
             user_id = None
-        if project_id == 'None':
-            project_id = None
-        todo = Todo(user_id, project_id, form.title.data, form.description.data, form.deadline.data, form.priority.data)
+        todo = Todo(user_id, form.title.data, form.description.data, form.deadline.data, form.priority.data, form.user_status.data)
         db.session.add(todo)
         db.session.commit()
         return redirect(url_for('admin_todos_page'))
@@ -397,8 +453,7 @@ def admin_todos_page():
             ), Todo.is_deleted == False
         ).all()
         u_owners = [User.query.filter_by(id = todo.user_id).first() for todo in result]
-        p_owners = [Project.query.filter_by(id = todo.project_id).first() for todo in result]
-        return render_template('admin/todos.html', todos = result, u_owners = u_owners, p_owners = p_owners, form = form)   
+        return render_template('admin/todos.html', todos = result, u_owners = u_owners, form = form)   
     else:
         abort(403)
 
@@ -412,19 +467,23 @@ def admin_project_columns_page():
         .order_by(ProjectColumn.order)
         .all()
     )
-    form = ProjectColumnCreateForm()
+    projects = []
+    for pc in project_columns:
+        projects.append(Project.query.filter_by(id = pc.project_id).first())
+    form = ProjectColumnCreateForm(Project.query.filter_by(is_deleted = False).all())
     if request.method == 'GET' and 'view_project_column' in info[0]:
-        return render_template('admin/project_column.html', columns = project_columns, form = form)
+        return render_template('admin/project_column.html', columns = project_columns, form = form, projects = projects)
     elif request.form.get('update_project_column') and 'edit_project_column' in info[0]:
         pc_id = request.form.get('update_project_column')
         pc = ProjectColumn.query.filter_by(id = pc_id).first()
-        pc.column = request.form.get('update_column')
-        pc.order = request.form.get('update_order')
+        pc.project_id = form.project_id.data
+        pc.column = form.column.data
+        pc.order = form.order.data
         db.session.commit()
         flash("Project column successfully updated", 'success')
         return redirect(url_for('admin_project_columns_page'))
     elif form.validate_on_submit() and 'create_project_column' in info[0]:
-        pc = ProjectColumn(form.column.data, form.order.data)
+        pc = ProjectColumn(form.project_id.data, form.column.data, form.order.data)
         db.session.add(pc)
         db.session.commit()
         flash("Project column successfully created", "success")
@@ -436,6 +495,17 @@ def admin_project_columns_page():
         db.session.commit()
         flash("Project-Column successfuly deleted", 'success')
         return redirect(url_for('admin_project_columns_page'))
+    elif request.form.get('search'):
+        text = request.form.get('search_text')
+        result = ProjectColumn.query.filter(
+            or_(
+                Project.title.ilike(f"%{text}%"),
+                ProjectColumn.column.ilike(f"%{text}%")
+            ), ProjectColumn.is_deleted == False
+        ).all()
+        projects = []
+        for pc in result:
+            projects.append(Project.query.filter_by(id = pc.project_id).first())
+        return render_template('admin/project_column.html', columns = result, form = form, projects = projects)   
     else:
-        print(form.errors)
         abort(403)

@@ -6,7 +6,6 @@ class Project(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     team_lead_id = db.Column(db.Integer(), db.ForeignKey('users.id'), nullable=True)
-    column_id = db.Column(db.Integer(), db.ForeignKey('project_column.id'), default = 1)
     title = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=True)
     deadline = db.Column(db.DateTime(), nullable=False)

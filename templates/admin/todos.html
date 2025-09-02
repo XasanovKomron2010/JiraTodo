@@ -33,9 +33,9 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <label class="col-sm-4 col-form-label">{{ form.project_id.label() }}</label>
+                        <label class="col-sm-4 col-form-label">{{ form.user_status.label() }}</label>
                         <div class="col-sm-8">
-                            {{ form.project_id(class="form-control") }}
+                            {{ form.user_status(class="form-control") }}
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -90,12 +90,11 @@
         <thead>
             <tr>
                 <th>User's name</th>
-                <th>Project's name</th>
                 <th>Title</th>
                 <th>Description</th>
                 <th>Priority</th>
                 <th>Deadline</th>
-                <th>Status</th>
+                <th>User Status</th>
                 <th>Is Frozen</th>
                 <th>Action</th>
             </tr>
@@ -105,12 +104,11 @@
                 <tr>
                 
                     <td>{{ u_owners[i].full_name }}</td>
-                    <td>{{ p_owners[i].title }}</td>
                     <td>{{ todos[i].title }}</td>
                     <td>{{ todos[i].description }}</td>
                     <td>{{ todos[i].priority }}</td>
                     <td>{{ todos[i].deadline.strftime("%B %d, %Y, %I:%M %p") }}</td>
-                    <td>{{ todos[i].status }}</td>
+                    <td>{{ todos[i].user_status }}</td>
                     <td>{{ todos[i].is_frozen }}</td>
                     <td class="d-flex justify-content-start">
                         <button data-toggle="modal" data-target="#update{{ todos[i].id }}" class="btn"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -159,9 +157,9 @@
                                         </div>
                                     </div>
                                     <div class="row mb-3">
-                                        <label class="col-sm-4 col-form-label">{{ form.project_id.label() }}</label>
+                                        <label class="col-sm-4 col-form-label">{{ form.user_status.label() }}</label>
                                         <div class="col-sm-8">
-                                            {{ form.project_id(class="form-control") }}
+                                            {{ form.user_status(class="form-control", value = todos[i].user_status) }}
                                         </div>
                                     </div>
                                     <div class="row mb-3">
@@ -189,9 +187,9 @@
                                         </div>
                                     </div>
                                     <div class="row mb-3">
-                                        <label class="col-sm-4 col-form-label">{{ form.status.label() }}</label>
+                                        <label class="col-sm-4 col-form-label">{{ form.user_status.label() }}</label>
                                         <div class="col-sm-8">
-                                            {{ form.status(class="form-control") }}
+                                            {{ form.user_status(class="form-control") }}
                                         </div>
                                     </div>
                                 </div>

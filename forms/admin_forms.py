@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, EmailField, validators, SelectField, DateTimeLocalField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, EmailField, validators, SelectField, DateTimeLocalField, IntegerField, HiddenField
 
 
 class UserCreateForm(FlaskForm):
@@ -21,30 +21,39 @@ class ProjectCreateForm(FlaskForm):
     title = StringField("Title", [validators.DataRequired()])
     description = StringField("Description", [validators.DataRequired()])
     deadline = DateTimeLocalField("Deadline", format='%Y-%m-%dT%H:%M', validators=[validators.DataRequired()])
-    status = SelectField("Column", choices = [])
     submit = SubmitField("Submit", [validators.DataRequired()])
 
-    def __init__(self, team_leads, column_choices, *args, **kwargs):
+    def __init__(self, team_leads, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.team_lead.choices = [(None, "Nobody")] + [(t.id, t.full_name) for t in team_leads]
-        self.status.choices = [(cc.id, cc.column) for cc in column_choices]
 
 class TodoCreateForm(FlaskForm):
     user_id = SelectField("User", choices = [])
-    project_id = SelectField("Project", choices = [])
     title = StringField("Title", [validators.DataRequired()])
     description = StringField("Description", [validators.DataRequired()])
     priority = SelectField('Priority', choices=[('low','Low'),('medium','Medium'),('high','High')], default='low')
-    status = SelectField('Status', choices = [('pending','Pending'),('doing','Doing'),('completed','Completed'),('failed','Failed')])
+    user_status = SelectField('User Status', choices = [('pending','Pending'),('doing','Doing'),('completed','Completed'),('failed','Failed')])
     deadline = DateTimeLocalField("Deadline", format='%Y-%m-%dT%H:%M', validators=[validators.DataRequired()])
     submit = SubmitField("Create Todo")
 
-    def __init__(self, users, projects, *args, **kwargs):
+    def __init__(self, users, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user_id.choices = [(None, 'Nobody')] + [(u.id, u.full_name) for u in users]
-        self.project_id.choices = [(None, 'Nothing')] + [(p.id, p.title) for p in projects]
 
 class ProjectColumnCreateForm(FlaskForm):
+    project_id = SelectField("Project", choices = [])
     column = StringField("Column", [validators.DataRequired()])
     order = IntegerField("Order", [validators.DataRequired()])
     submit = SubmitField("Submit")
+
+    def __init__(self, projects, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.project_id.choices = [(p.id, p.title) for p in projects]
+
+class ProjectTodoCreateForm(FlaskForm):
+    column_id = HiddenField("Column ID", [validators.DataRequired()]) #just to transfer data
+    title = StringField("Title", [validators.DataRequired()])
+    description = StringField('Description', [validators.DataRequired()])
+    priority = SelectField('Priority', choices=[('low','Low'),('medium','Medium'),('high','High')], default='low')
+    deadline = DateTimeLocalField("Deadline", format='%Y-%m-%dT%H:%M', validators=[validators.DataRequired()])
+    submit = SubmitField("Create Todo")

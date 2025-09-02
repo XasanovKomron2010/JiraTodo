@@ -44,11 +44,7 @@
                 <li><i class="fa-solid fa-circle-check"></i><a class="ml-3" href="{{ url_for('admin_project_columns_page') }}">Project-Column</a></li>
             </ul>
             {% if role != 'admin' %}
-                <li onclick="toggleCollapse(this)" class="toggler"><i class="fa-solid fa-chevron-right arrow"></i><span class="ml-3">My todos</span></li>
-                <ul class="submenu">
-                    <li><i class="fa-solid fa-clipboard-user"></i><a class="ml-3" href="{{ url_for('my_user_todos_page') }}">User Todos</a></li>
-                    <li><i class="fa-solid fa-folder-open"></i><a class="ml-3" href="{{ url_for('my_project_todos_page') }}">Project Todos</a></li>
-                </ul>
+                <li><i class="fa-solid fa-clipboard-user"></i><a class="ml-3" href="{{ url_for('my_user_todos_page') }}">My Todos</a></li>
             {% endif %}
             <li><i class="fa-solid fa-right-from-bracket"></i><a class="ml-3" href="{{ url_for('logout_page') }}">Logout</a></li>
         </ul>
@@ -58,7 +54,6 @@
 </body>
 <script>
     function appearSidebar() {
-        console.log("heree");
         
         const sidebar = document.getElementById("sidebar");
         sidebar.classList.add("open");

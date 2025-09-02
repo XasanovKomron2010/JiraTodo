@@ -1,9 +1,6 @@
 {% extends 'base.html' %}
-
-
 {% block content %}
-
-<style>
+  <style>
     body {
       margin: 0;
       padding: 0;
@@ -11,165 +8,106 @@
       background: #f9f9fb;
       color: #333;
     }
-    .project-column{
-        background: #fff;
-        border-radius: 12px;
-        padding: 15px;
-        width: 250px;
-        flex-shrink: 0;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        display: flex;
-        flex-direction: column;
-        max-height: 85vh;
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
     }
-    h2 {
-      font-size: 18px;
+
+    h1 {
+      font-size: 22px;
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
       color: #222;
     }
 
-    .board {
+    .projects {
       display: flex;
-      gap: 20px;
-      padding: 20px;
-      overflow-x: auto;
-      align-items: flex-start;
+      flex-wrap: nowrap;                 /* force in one row */
+      overflow-x: auto;                  /* always allow horizontal scroll */
+      overflow-y: hidden;
+      gap: 16px;
+      padding-bottom: 12px;
+      -webkit-overflow-scrolling: touch; /* smooth on iOS */
+    }
+
+    /* make scrollbar prettier */
+    .projects::-webkit-scrollbar {
+      height: 8px;
+    }
+    .projects::-webkit-scrollbar-track {
+      background: #f0f0f0;
+      border-radius: 10px;
+    }
+    .projects::-webkit-scrollbar-thumb {
+      background: #bbb;
+      border-radius: 10px;
+    }
+    .projects::-webkit-scrollbar-thumb:hover {
+      background: #888;
+    }
+    .projects {
+      scrollbar-color: #bbb #f0f0f0;  /* Firefox */
+      scrollbar-width: thin;
     }
 
     .card {
-      display: block;
-      color: black;
-      position: relative; /* for arrows positioning */
+      flex: 0 0 250px;      /* fixed card width */
       background: #fff;
       border: 1px solid #eee;
       border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 12px;
+      padding: 15px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
-      cursor: pointer;
+      text-decoration: none;
+      color: black;
     }
 
     .card:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-decoration: none;
-      color: black;
     }
 
-    .move-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      transform-origin: center;
-      background: #6a4dc6;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 26px;
-      height: 26px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.2s ease, transform 0.15s ease;
+    .card b {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 8px;
     }
 
-  .card:hover .move-btn {
-    opacity: 1;
-  }
-
-  .move-btn:hover {
-    background: #5538a5;
-    color: white;
-    text-decoration: none;
-  }
-
-  .move-left {
-    left: -12px;
-  }
-
-  .move-right {
-    right: -12px;
-  }
-
-  .tag {
+    .tag {
       display: inline-block;
       background: #ede7ff;
       color: #6a4dc6;
       font-size: 11px;
       padding: 2px 6px;
       border-radius: 6px;
-      margin-top: 15px;
-  }
+      margin-bottom: 10px;
+    }
 
-  .footer {
-    font-size: 12px;
-    color: #666;
-    margin-top: 12px;
-  }
+    .footer {
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+    }
+    a:hover{
+      color: black;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <section class="container">
+    <h1>Projects</h1>
 
-  .add-card {
-    border: none;
-    background: none;
-    color: #6a4dc6;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: auto;
-  }
-  .add-column {
-    flex-shrink: 0;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: none;
-    background: #6a4dc6;
-    color: #fff;
-    font-size: 22px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    transition: background 0.2s ease, transform 0.15s ease;
-    align-self: flex-start;
-    margin-top: 10px;
-
-    /* keep the plus centered */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;   /* remove font vertical padding */
-    padding-bottom: 5px;
-  }
-
-  .add-column:hover {
-    background: #5538a5;
-    transform: scale(1.07);
-    color: white;
-    text-decoration: none;
-  }
-
-</style>
-
-<section class="container board">
-    {% for pc in project_columns %}
-        <div class="project-column">
-            <h2 class="mb-4">{{ pc.column.column }}</h2>
-            {% for project in pc['projects'] %}
-                <a class="card" href="{{ url_for('admin_project_detailed_page', project_id=project.id) }}">
-                    <b>{{ project.title }}</b>
-                    <span class="tag">{{ project.deadline.strftime("%d %B %Y, %H:%M") }}</span>
-                    <div class="footer">{{ project.description }}</div>
-                    <form action="{{ url_for('change_column', project_id = project.id) }}" method="post">
-                      <button value="pon" name="left" class="move-btn move-left">&larr;</button>
-                      <button value="pon" name="right" class="move-btn move-right">&rarr;</button>
-                    </form>
-                </a>
-            {% endfor %}
-        </div>
-    {% endfor %}
-    <a class="add-column" href="{{ url_for('admin_project_columns_page') }}">+</a>
-</section>
+    <div class="projects">
+      {% for project in projects %}
+        <a href="{{ url_for('admin_project_detailed_page', project_id=project.id) }}" class="card">
+          <b>{{project.title}}</b>
+          <span class="tag">{{ project.deadline.strftime("%d %B %Y, %H:%M") }}</span>
+          <div class="footer">{{ project.description }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
 {% endblock %}

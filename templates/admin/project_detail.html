@@ -2,9 +2,6 @@
 
 {% block content %}
 <style>
-    .nav{
-        padding: 10px !important;
-    }
     body {
         margin: 0;
         padding: 0;
@@ -14,7 +11,7 @@
     }
 
     .project-page {
-        max-width: 900px;
+        max-width: 1500px;
         margin: 0 auto;
         padding: 20px;
         padding-top: 15px;
@@ -25,7 +22,7 @@
         border-radius: 12px;
         padding: 25px;
         box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-        margin-bottom: 10px;
+        margin-bottom: 15px;
     }
 
     .card h1, .card h2 {
@@ -54,33 +51,112 @@
         margin-bottom: 5px;
     }
 
+    /* Kanban horizontal layout */
+    .columns {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+    }
+
+    .columns::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .columns::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+    }
+
+    .column {
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px;
+        padding-right: 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        display: flex;
+        flex-direction: column;
+        min-width: 320px;
+        max-height: 600px;
+        position: relative;
+    }
+
+    .column-arrows {
+        position: absolute;
+        top: 10px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        opacity: 0; /* hidden by default */
+        transition: opacity 0.3s ease;
+        pointer-events: none; /* prevent blocking clicks when hidden */
+    }
+
+    .column:hover .column-arrows {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .column-arrow {
+        background: #6a4dc6;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s;
+        position: absolute;
+    }
+
+    .column-arrow:hover {
+        background: #5538a5;
+    }
+
+    .column h3 {
+        margin-top: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #444;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
     .todo-list {
-        margin-top: 15px;
-        max-height: 250px;      /* adjust as needed */
+        flex: 1;
         overflow-y: auto;
-        padding-right: 5px;     /* space for scrollbar */
+        padding-right: 5px;
     }
 
     .todo-card {
+        position: relative;
         background: #f9f9fb;
         border-radius: 10px;
-        padding: 15px;
+        padding: 14px;
         margin-bottom: 12px;
-        transition: background 0.2s;
+        transition: background 0.2s, box-shadow 0.2s;
     }
 
     .todo-card:hover {
         background: #f1f1f5;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
     }
 
     .todo-title {
         font-weight: 600;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
+        font-size: 15px;
     }
 
     .todo-desc {
         font-size: 13px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         color: #555;
     }
 
@@ -88,11 +164,14 @@
         font-size: 12px;
         color: #666;
         display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
     }
 
-    .status-pending,.status-doing,.medium-priority {
+    .status-pending,
+    .status-doing,
+    .medium-priority {
         color: #c77d00;
         font-weight: 600;
     }
@@ -102,14 +181,54 @@
         font-weight: 600;
     }
 
-    .status-failed, .high-priority{
+    .status-failed,
+    .high-priority {
         color: red;
         font-weight: 600;
     }
 
+    .low-priority {
+        color: #0077cc;
+        font-weight: 600;
+    }
+
+    /* Hover arrows */
+    .arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #6a4dc6;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+        font-weight: bold;
+        opacity: 0;;  /* ⬅️ hidden by default */
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+        z-index: 10;
+    }
+
+    .todo-card:hover .arrow {
+        opacity: 1;
+        transition: 0.3s; /* ⬅️ only visible on hover */
+    }
+
+    .arrow:hover {
+        background: #5538a5;
+        transform: translateY(-50%);
+        text-decoration: none;
+        color: white;
+    }
+
+
     .back-link {
         display: inline-block;
-        margin-top: 5px;
+        margin-top: 10px;
         text-decoration: none;
         color: #6a4dc6;
         font-weight: 600;
@@ -119,7 +238,111 @@
     .back-link:hover {
         color: #5538a5;
     }
+
+    .add-column-btn {
+        background: linear-gradient(135deg, #6a4dc6, #9b6dff);
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        align-self: center;
+        min-width: 165px;
+    }
+
+    .add-column-btn:hover {
+        background: linear-gradient(135deg, #5a3db6, #8a5df0);
+        box-shadow: 0 5px 12px rgba(0,0,0,0.25);
+        transform: translateY(-2px);
+    }
+
+    .add-column-btn:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .add-todo-btn {
+        margin-top: 10px;
+        background: #f0f0f5;
+        border: none;
+        color: #555;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .add-todo-btn:hover {
+        background: #e0e0eb;
+        color: #333;
+    }
+
+    .add-todo-btn:active {
+        transform: scale(0.95);
+    }
+    .left-arrow{
+        left: 10px;
+    }
+    .right-arrow{
+        right: 10px;
+    }
+    .delete-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        background: transparent;
+        border: none;
+        color: #999;
+        font-size: 14px;
+        cursor: pointer;
+        transition: color 0.2s ease, transform 0.2s ease;
+        z-index: 20;
+    }
+
+    .delete-btn:hover {
+        color: red;
+        transform: scale(1.2);
+    }
+    .column-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px; /* small space between text and button */
+        margin-bottom: 10px;
+    }
+
+    .delete-column-btn {
+        background: transparent;
+        border: none;
+        color: #999;
+        font-size: 18px;
+        cursor: pointer;
+        transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .delete-column-btn:hover {
+        color: red;
+        transform: scale(1.2);
+    }
 </style>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, msg in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show d-flex justify-content-between align-items-center mr-4 mt-3" role="alert">
+                {{ msg }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
 <section class="project-page">
     <!-- Project Info -->
@@ -129,12 +352,8 @@
 
         <div class="meta-grid">
             <div class="meta-item">
-                <span>Team Lead ID</span>
-                {{ project.team_lead_id }}
-            </div>
-            <div class="meta-item">
-                <span>Column ID</span>
-                {{ project.column_id }}
+                <span>Team Lead</span>
+                {{ team_lead }}
             </div>
             <div class="meta-item">
                 <span>Deadline</span>
@@ -154,20 +373,123 @@
     <!-- Todos -->
     <div class="card">
         <h2>Project Todos</h2>
-        <div class="todo-list">
-            {% for todo in todos %}
-                <div class="todo-card">
-                    <div class="todo-title">{{ todo.title }}</div>
-                    <div class="todo-desc">{{ todo.description }}</div>
-                    <div class="todo-meta">
-                        <span class="{{ todo.priority.lower() }}">Priority: {{todo.priority}}</span>
-                        <span>Deadline: {{ todo.deadline.strftime("%d %B %Y, %H:%M") }}</span>
-                        <span>Status: <span class="status-{{ todo.status.lower() }}">{{todo.status}}</span></span>
-                        <span>Created: {{ todo.created_at.strftime("%d %B %Y, %H:%M") }}</span>
-                        <span>Frozen? {% if project.is_frozen %}Yes{% else %}No{% endif %}</span>
+        <div class="columns">
+            {% for item in together %}
+                <div class="column">
+                    <div class="column-header">
+                        <h3 class="m-0">{{ item['column'].column }}</h3>
+                        <form method="post">
+                            <button type="submit" class="delete-column-btn" name="delete-column" value="{{ item['column'].id }}">✖</button>
+                        </form>
+                    </div>
+                    <form action="{{ url_for('change_column2', column_id = item['column'].id) }}" method="post" class="w-100 d-flex column-arrows">
+                        <button type="submit" class="column-arrow" name="move" value="left">←</button>
+                        <button type="submit" class="column-arrow right-arrow" name="move" value="right">→</button>
+                    </form>
+                    <div class="todo-list">
+                        {% for todo in item['todos'] %}
+                            <div class="todo-card">
+                                <form method="post">
+                                    <button type="submit" class="delete-btn" name="delete_todo" value="{{ todo.id }}" title="Delete">✖</button>
+                                </form>
+                                <form method="post" action="{{ url_for('change_column', todo_id=todo.id, column_id=item['column'].id) }}"></form>
+                                    <button type="submit" class="arrow left-arrow" name="arrow" value="left">←</button>
+                                    <div>
+                                        <div class="todo-title">{{ todo.title }}</div>
+                                        <div class="todo-desc">{{ todo.description }}</div>
+                                        <div class="todo-meta">
+                                            <span class="{{ todo.priority.lower() }}">Priority: {{ todo.priority }}</span>
+                                            <span>Deadline: {{ todo.deadline.strftime("%d %B %Y, %H:%M") }}</span>
+                                            <span>Created: {{ todo.created_at.strftime("%d %B %Y, %H:%M") }}</span>
+                                            <span>Frozen? {% if project.is_frozen %}Yes{% else %}No{% endif %}</span>
+                                        </div>
+                                    </div>
+                                    <button name="arrow" value="right" type="submit" class="arrow right-arrow text-center d-flex align-items-center">→</button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button class="add-todo-btn" data-toggle="modal" data-target="#todoCreation{{item['column'].id}}">+ Add todo</button>
+                </div>
+                <!-- Todo Modal -->
+                <div class="modal fade" id="todoCreation{{item['column'].id}}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Todo Creation Modal</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <form method="post">
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <label class="col-sm-4 col-form-label">Priority</label>
+                                        <div class="col-sm-8">
+                                            <select name="priority" class="form-control">
+                                                <option value="low">Low</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-4 col-form-label">Title</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" name="title" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-4 col-form-label">Description</label>
+                                        <div class="col-sm-8">
+                                            <textarea name="description" class="form-control" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-4 col-form-label">Deadline</label>
+                                        <div class="col-sm-8">
+                                            <input type="hidden" name="column_id" value="{{ item['column'].id }}">
+                                            <input type="datetime-local" name="deadline" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                    <button type="submit" name="submit" value="todo" class="btn btn-primary">Submit</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
+            <!-- Add column -->
+            <div class="add-column-btn" data-toggle="modal" data-target="#columnCreation">+ Add New Column</div>
+            <div class="modal fade" id="columnCreation" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Column Creation Modal</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form method="post">
+                            <div class="modal-body">
+                                <div class="row mb-3">
+                                    <label class="col-sm-4 col-form-label">Column</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" name="column" class="form-control" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" name="submit" value="column" class="btn btn-primary">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

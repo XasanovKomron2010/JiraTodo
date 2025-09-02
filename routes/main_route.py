@@ -6,14 +6,14 @@ from models.role import Role
 from models.permission import Permission
 from models.role_permission import RolePermission
 from models.user_permission import UserPermission
-from flask import render_template, request
+from flask import render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 
 @root.route('/')
 @root.route('/home')
 @login_required
 def home_page():
-    return "dinaxu"
+    return redirect(url_for('login_page'))
 
 def get_permissions_and_role(user_id):
     user = User.query.filter_by(id=user_id).first()
